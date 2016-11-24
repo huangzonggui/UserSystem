@@ -129,18 +129,12 @@ public class OS extends JFrame implements ActionListener {
         setVisible(true);//将JFrame对象显示出来
         setResizable(true);//设置窗口是否可以调整大小
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//用户单击窗口的关闭按钮时程序执行的操作
-
-//        for (int i = 0; i < N; i++) {
-//            for (int j = 0; j < 3; j++) {
-//                System.out.print(a[i][j]+"  ");
-//            }
-//            System.out.println();
-//        }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        int i, j, n, p, h;
+        int i, j, n, p;
+        int firstNum = 0;
         double comeTime, startTime, num;//comeTime提交时间、startTime运行时间、num进程号
         double b[][] = new double[N][7];
 
@@ -157,16 +151,13 @@ public class OS extends JFrame implements ActionListener {
                 for (j = 0; j < N; j++) {
                     //比较提交时间，提交时间按从小到大排列，从上往下排
                     if (b[i][1] <= b[j][1]) {
-                        //交换提交时间
-                        comeTime = b[i][1];
+                        comeTime = b[i][1];//交换提交时间
                         b[i][1] = b[j][1];
                         b[j][1] = comeTime;
-                        //交换运行时间
-                        startTime = b[i][2];
+                        startTime = b[i][2];//交换运行时间
                         b[i][2] = b[j][2];
                         b[j][2] = startTime;
-                        //交换进程号
-                        num = b[i][0];
+                        num = b[i][0];//交换进程号
                         b[i][0] = b[j][0];
                         b[j][0] = num;
                     }
@@ -212,40 +203,59 @@ public class OS extends JFrame implements ActionListener {
             for (i = 0; i < N; i++) {
                 for (j = 0; j < N; j++) {
                     if (b[i][1] < b[j][1]) {
-                        //交换提交时间
-                        comeTime = b[i][1];
+                        comeTime = b[i][1];//交换提交时间
                         b[i][1] = b[j][1];
                         b[j][1] = comeTime;
-                        //交换运行时间
-                        startTime = b[i][2];
+                        startTime = b[i][2];//交换运行时间
                         b[i][2] = b[j][2];
                         b[j][2] = startTime;
-                        //交换进程号
-                        num = b[i][0];
+                        num = b[i][0];//交换进程号
                         b[i][0] = b[j][0];
                         b[j][0] = num;
                     }
                 }
             }
-
-            //第一个进程的运行情况
+            //如果存在提交相等而且提交时间是最早的，按
+            for (i = 0; i < N; i++) {
+                if (b[i][1] == b[1][1]) {//最早到达的进程有多个
+                    firstNum = i+1;//跟下面的j有点相似
+                }
+            }
+            //将最早同时到达的短作业按从小到大排列，从上往下排
+            for (i = 0; i < firstNum; i++) {
+                for (j = 0; j < firstNum; j++) {
+                    if (b[i][2] < b[j][2]) {
+                        comeTime = b[i][1];//交换提交时间
+                        b[i][1] = b[j][1];
+                        b[j][1] = comeTime;
+                        startTime = b[i][2];//交换运行时间
+                        b[i][2] = b[j][2];
+                        b[j][2] = startTime;
+                        num = b[i][0];//交换进程号
+                        b[i][0] = b[j][0];
+                        b[j][0] = num;
+                    }
+                }
+            }
+            //第一个进程工作
             b[0][3] = b[0][1];//开始时间=提交时间
             b[0][4] = b[0][3] + b[0][2];//结束时间=开始时间+运行时间
             b[0][5] = b[0][4] - b[0][1];//周转时间=结束时间-提交时间
             b[0][6] = b[0][5] / b[0][2];//带权周转时间=周转时间/运行时间
-
+            //循环将所有进程执行
             for (i = 1; i < N; i++) {
-                //如果前一个进程的结束时间>=提交时间
+                //如果前一个进程的结束时间>=第i行的提交时间（下面的进程在等待结束）
                 if (b[i - 1][4] >= b[i][1]) {
+                    //循环看看还有没有等待的进程
                     for (j = i; j < N; j++) {
-
+                        //进程的结束时间<第j行的提交时间（找到不等待的j行）
                         if (b[i - 1][4] < b[j][1]) {
-                            h = j;
-
-                            for (p = i; p < h; p++) {
-                                for (n = i; n < h; n++) {
+                            //(循环将所有等待线程结束的进程按短作业优先排序）
+                            for (p = i; p < j; p++) {
+                                for (n = i; n < j; n++) {
+                                    //短作业优先，按作业长短排序
                                     if (b[p][2] < b[n][2]) {
-                                        //交换提交时间
+                                        //交换提交时间d
                                         comeTime = b[p][1];
                                         b[p][1] = b[n][1];
                                         b[n][1] = comeTime;
@@ -260,38 +270,40 @@ public class OS extends JFrame implements ActionListener {
                                     }
                                 }
                             }
-
-                            b[i][3] = b[i - 1][4];//开始时间直接等于前一个进程的结束时间（提交了还没有结束）
+                            //排完序后开始等待中的最短进程
+                            b[i][3] = b[i - 1][4];
                             b[i][4] = b[i][3] + b[i][2];
                             b[i][5] = b[i][4] - b[i][1];
                             b[i][6] = b[i][5] / b[i][2];
+                            break;
                         }
                     }
+                    //判断所有进程是否全部提交，true：全部提交完成
                     if (b[i - 1][4] >= b[N - 1][1]) {
+                        //若全部提交完，按短作业优先排序
                         for (p = i; p < N; p++) {
                             for (n = i; n < N; n++) {
                                 if (b[p][2] < b[n][2]) {
-                                    //交换提交时间
                                     comeTime = b[p][1];
                                     b[p][1] = b[n][1];
                                     b[n][1] = comeTime;
-                                    //交换运行时间
                                     startTime = b[p][2];
                                     b[p][2] = b[n][2];
                                     b[n][2] = startTime;
-                                    //交换进程号
                                     num = b[p][0];
                                     b[p][0] = b[n][0];
                                     b[n][0] = num;
                                 }
                             }
                         }
+                        //排完序后执行第i条，后面在等待的进程通过最外层的for循环来响应下面的代码来工作
                         b[i][3] = b[i - 1][4];//开始时间直接等于前一个进程的结束时间（提交了还没有结束）
                         b[i][4] = b[i][3] + b[i][2];
                         b[i][5] = b[i][4] - b[i][1];
                         b[i][6] = b[i][5] / b[i][2];
                     }
                 }
+                //如果没有等待结束的进程，按顺序做下一个到来的进程
                 if (b[i - 1][4] < b[i][1]) {
                     //第i个进程的运行情况
                     b[i][3] = b[i][1];//开始时间=提交时间
@@ -299,9 +311,7 @@ public class OS extends JFrame implements ActionListener {
                     b[i][5] = b[i][4] - b[i][1];//周转时间=结束时间-提交时间
                     b[i][6] = b[i][5] / b[i][2];//带权周转时间=周转时间/运行时间
                 }
-
             }
-
             //将各个进程运行的时间矩阵b填进表table里
             for (i = 0; i < N; i++) {
                 for (j = 0; j < 7; j++) {
@@ -310,9 +320,13 @@ public class OS extends JFrame implements ActionListener {
             }
         }
 
-
         //时间片轮转
         if (e.getSource().equals(b3)) {
+            JTextField txt = new JTextField(5);
+            String val = JOptionPane.showInputDialog("请输入时间片：");
+            txt.setText(val);
+            Double slice = Double.parseDouble(txt.getText());
+
 
         }
         //高响应比优先
