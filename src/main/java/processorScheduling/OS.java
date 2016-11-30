@@ -215,10 +215,10 @@ public class OS extends JFrame implements ActionListener {
                     }
                 }
             }
-            //如果存在提交相等而且提交时间是最早的，按
+            //如果存在提交相等而且提交时间是最早的
             for (i = 0; i < N; i++) {
-                if (b[i][1] == b[1][1]) {//最早到达的进程有多个
-                    firstNum = i+1;//跟下面的j有点相似
+                if (b[i][1] == b[0][1]) {//最早到达的进程有多个
+                    firstNum = i + 1;//跟下面的j有点相似
                 }
             }
             //将最早同时到达的短作业按从小到大排列，从上往下排
@@ -320,18 +320,233 @@ public class OS extends JFrame implements ActionListener {
             }
         }
 
-        //时间片轮转
+        //（3）、时间片轮转
         if (e.getSource().equals(b3)) {
             JTextField txt = new JTextField(5);
             String val = JOptionPane.showInputDialog("请输入时间片：");
             txt.setText(val);
-            Double slice = Double.parseDouble(txt.getText());
+            Double slice = Double.parseDouble(txt.getText());//时间片
 
+            boolean flag = true;
+            int t1 = 0, m1 = 1, m0 = 0;
+            Double c[] = new Double[N];
+            for (i = 0; i < c.length; i++) {
+                c[i] = 0.0;
+            }
+            //读取
+            for (i = 0; i < N; i++) {
+                for (j = 0; j < 3; j++) {
+                    b[i][j] = Double.parseDouble(a[i][j]);
+                }
+            }
+            //排序
+            for (i = 0; i < N; i++) {
+                for (j = 0; j < N; j++) {
+                    if (b[i][1] <= b[j][1]) {
+                        comeTime = b[i][1];//交换提交时间
+                        b[i][1] = b[j][1];
+                        b[j][1] = comeTime;
+                        startTime = b[i][2];//交换运行时间
+                        b[i][2] = b[j][2];
+                        b[j][2] = startTime;
+                        num = b[i][0];//交换进程号
+                        b[i][0] = b[j][0];
+                        b[j][0] = num;
+                    }
+                }
+            }
+
+            Double time = b[0][1];//从第一个提交时间开始，记录时间，累加
+
+            b[0][3] = b[0][1];//开始时间
+//           flag表示是否运行, t1 = 0, m1 = 1, m0 = 0;c[i] = 0.0;c[i]为i进程运行了几个时间单位
+//            m0表示还没开始运行的进程
+//            t1==1表示正在做的进程还没有工作完
+//            m1表示进程正在运行到第m1个进程？
+            while (flag) {
+                t1 = 0;
+                for (i = m0; i < m1 + m0; i++) {
+                    //存在小于运行时间的话继续运行
+                    if (c[i] < b[i][2]) {
+                        t1 = 1;
+                        break;
+                    }
+                }
+
+                if (t1 == 1) {
+                    for (i = m0; i < m1 + m0; i++) {
+                        if (c[i] < b[i][2]) {
+                            c[i] = c[i] + slice;//加时间片
+                            time = time + slice;//记录时间累加
+                            if (c[i] == b[i][2]) {//应该是>=?
+                                b[i][4] = time;//结束时间
+                            }
+                        }
+                    }
+                    //把剩下的进程循环（m1从1开始）
+                    while (m1 <= N - 1) {
+                        //提交时间小于时间累加的话，都可以开始了
+                        if (b[m1][1] <= time) {
+                            b[m1][3] = time;//开始时间
+                            c[m1] = c[m1] + slice;
+                            time = time + slice;
+                            m1 = m1 + 1;//进程正在运行的到的进程
+                        }
+                    }//m1最后等于N-1
+                } else {
+                    //循环，将提交时间全赋值给开始时间，判断，如果c[i]==0.0,证明还没运行
+                    for (i = 0; i < N; i++) {
+                        if (c[i] == 0.0) {
+                            m0 = i;
+                            time = time + b[i][1];//?
+                            break;//发现未开始的进程
+                        }
+                        //开始时间=提交时间
+                        b[m0][3] = b[m0][1];//将提交时间赋给开始时间,m0表示还没开始运行的进程的最后一个i
+                    }
+                }
+
+                flag = false;
+                for (i = 0; i < N; i++) {
+                    //存在未运行完的进程，继续运行
+                    if (c[i] < b[i][2]) {
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+
+            //计算周转时间跟带权周转时间
+            for (i = 0; i < N; i++) {
+                b[i][5] = b[i][4] + b[i][1];
+                b[i][6] = b[i][5] / b[i][2];
+            }
+            //填表
+            for (i = 0; i < N; i++) {
+                for (j = 0; j < 7; j++) {
+                    table.repaint();
+                    table.setValueAt("" + b[i][j], i, j);
+                }
+            }
 
         }
-        //高响应比优先
+        //（4）、高响应比优先
         if (e.getSource().equals(b4)) {
+            double dd,ss,mm;
+            double d[] = new double[N];//响应比
+            //读取
+            for (i = 0; i < N; i++) {
+                for (j = 0; j < 3; j++) {
+                    b[i][j] = Double.parseDouble(a[i][j]);
+                }
+            }
+            //排序
+            for (i = 0; i < N; i++) {
+                for (j = 0; j < N; j++) {
+                    if (b[i][1] <= b[j][1]) {
+                        comeTime = b[i][1];//交换提交时间
+                        b[i][1] = b[j][1];
+                        b[j][1] = comeTime;
+                        startTime = b[i][2];//交换运行时间
+                        b[i][2] = b[j][2];
+                        b[j][2] = startTime;
+                        num = b[i][0];//交换进程号
+                        b[i][0] = b[j][0];
+                        b[j][0] = num;
+                    }
+                }
+            }
+            //如果同时到达的进程的提交时间不为零，响应比就不一样
+            if (b[0][1] != 0) {
+                //如果存在提交相等而且提交时间是最早的
+                for (i = 0; i < N; i++) {
+                    if (b[i][1] == b[0][1]) {//最早到达的进程有多个
+                        firstNum = i + 1;
+                    }
+                }
+                for (i = 0; i < firstNum; i++) {
+                    d[i] = (b[i][1] + b[i][2]) / b[i][2];//等待时间就是提交时间
+                }
 
+                for (i = 0; i < firstNum; i++) {
+                    for (j = i; j < firstNum; j++) {
+                        //如果i进程比j进程响应比大
+                        if (d[j] >= d[i]) {
+                            dd = d[j];
+                            d[j] = d[i];
+                            d[i] = dd;
+                            comeTime = b[j][0];
+                            b[j][0] = b[i][0];
+                            b[i][0] = comeTime;
+//                            ss = d[j];
+//                            d[j] = d[i];
+//                            d[i] = ss;
+                            startTime = b[j][1];
+                            b[j][1] = b[i][1];
+                            b[i][1] = startTime;
+//                            mm = d[j];
+//                            d[j] = d[i];
+//                            d[i] = mm;
+                            num = b[j][2];
+                            b[j][2] = b[i][2];
+                            b[i][2] = num;
+                        }
+                    }
+                }
+
+            }
+
+
+            b[0][3] = b[0][1];//开始时间=提交时间
+            b[0][4] = b[0][3] + b[0][2];//结束时间=开始时间+运行时间
+            b[0][5] = b[0][4] - b[0][1];//周转时间=结束时间-提交时间
+            b[0][6] = b[0][5] / b[0][2];
+
+            for (i = 1; i < N; i++) {
+                for (j = i; j < N; j++) {
+                    d[j] = (b[i - 1][4] - b[j][1] + b[j][2]) / b[j][2];//求出所有的响应比(响应比rr=(等待时间w+服务时间s）/s)//如果b[i - 1][4] - b[j][1]为负数？
+                }
+                //如果进程等待
+                if (b[i - 1][4] >= b[i][1]) {
+                    for (j = i; j < N; j++) {
+                        for (p = i; p < N; p++) {
+                            //如果j进程比p进程响应比大
+                            if (d[j] >= d[p]) {
+                                dd = d[j];
+                                d[j] = d[p];
+                                d[p] = dd;
+                                comeTime = b[j][0];
+                                b[j][0] = b[p][0];
+                                b[p][0] = comeTime;
+                                startTime = b[j][1];
+                                b[j][1] = b[p][1];
+                                b[p][1] = startTime;
+                                num = b[j][2];
+                                b[j][2] = b[p][2];
+                                b[p][2] = num;
+                            }
+                        }
+                    }
+                    b[i][3] = b[i - 1][4];
+                    b[i][4] = b[i][3] + b[i][2];
+                    b[i][5] = b[i][4] - b[i][1];
+                    b[i][6] = b[i][5] / b[i][2];
+                } else {
+                    //没有等待的话直接算
+                    b[i][3] = b[i][1];
+                    b[i][4] = b[i][3] + b[i][2];
+                    b[i][5] = b[i][4] - b[i][1];
+                    b[i][6] = b[i][5] / b[i][2];
+                }
+            }
+
+            //填表
+            for (i = 0; i < N; i++) {
+                for (j = 0; j < 7; j++) {
+                    table.repaint();//刷新
+                    table.setValueAt("" + b[i][j], i, j);
+                }
+            }
         }
 
         //将平均周转时间和平均带权周转时间填进JTextField中
