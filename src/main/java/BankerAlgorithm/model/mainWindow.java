@@ -1,4 +1,4 @@
-package BankerAlgorithm;
+package BankerAlgorithm.model;
 import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.*;
@@ -7,13 +7,7 @@ import javax.swing.*;
 /**
  * Created by hzg on 2016/11/28.
  */
-
-
-
 public class mainWindow extends JFrame implements ActionListener{
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
     JFrame bankerAlgoritJFrame;//主界面
     JLabel[] l;      //输入资源种类数，输入启动的进程数，资源请求，标签
@@ -280,9 +274,6 @@ public class mainWindow extends JFrame implements ActionListener{
      * 请求资源窗口类
      * */
     class RequestResourceWindow extends JFrame implements ActionListener{
-        /**
-         *
-         */
         private static final long serialVersionUID = 1L;
         JLabel rProcessNameL = new JLabel("进程名：");
         JButton reqResOK = new JButton("确定");
@@ -376,7 +367,6 @@ public class mainWindow extends JFrame implements ActionListener{
 
 //      System.out.println(P_id(requestP.trim()));
 //      System.out.println(requestP);
-//
 
 //      for(int i=0; i<n; i++){
 //          System.out.print(request[i]+" ");
@@ -494,6 +484,7 @@ public class mainWindow extends JFrame implements ActionListener{
      * */
     int P_id(String PName){
         for(int i=0; i<m; i++){
+            //compareToIgnoreCase比较忽略大小写
             if(processName[i].compareToIgnoreCase(PName) == 0) return i;
         }
         return -1;

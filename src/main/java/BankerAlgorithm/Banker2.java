@@ -9,7 +9,7 @@ import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
 import javax.swing.text.StyledEditorKit.ForegroundAction;
 
 
-public class Banker {
+public class Banker2 {
     static int available[]=new int[3];         //资源数
     static int max[][]=new int[5][3];          //最大需求
     static int allocation[][]=new int[5][3];   //分配
@@ -172,7 +172,7 @@ public class Banker {
         }
     }
     public static void main(String[] args) {
-        Banker bk=new Banker();
+        Banker2 bk=new Banker2();
         bk.getData();
         bk.getThread();
 
